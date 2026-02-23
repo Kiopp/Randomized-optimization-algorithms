@@ -14,7 +14,7 @@ def parse_jsp_instances(file_path):
     raw_instances = re.split(r'\s*\+{5,}\s*instance\s+', content)
 
     for section in raw_instances:
-        if not section.strip() in section: # Skip empty or header sections
+        if not section.strip() in section: # Skip empty or header sections 
             continue
             
         lines = [line.strip() for line in section.split('\n') if line.strip()]
