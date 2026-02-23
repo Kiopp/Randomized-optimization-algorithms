@@ -2,60 +2,32 @@ import random
 import math
 import copy
 import parse
+import helper
 
-def makespan(instance, solution):
-    jobs = instance['jobs']
-    machine_end_time = [0] * instance['n_machines'] # Time when each machine ends
-    job_end_time = [0] * instance['n_jobs'] # Time when each job is free
-    job_op = [0] * instance['n_jobs'] # Track operation step for each job
-
-    for job_id in solution:
-        next_op = job_op[job_id]
-
-        machine_id, duration = jobs[job_id][next_op]
-
-        start_time = max(machine_end_time[machine_id], job_end_time[job_id])
-        end_time = start_time + duration
-
-        machine_end_time[machine_id] = end_time
-        job_end_time[job_id] = end_time
-        job_op[job_id] += 1
-
-    return max(machine_end_time)
-
-def random_solution(instance):
-    solution = []
-    for i, job in enumerate(instance['jobs']):
-        solution.extend([i] * len(job))
-
-    random.shuffle(solution)
-    return solution
-
-def swap(solution):
-    # Swap two random elements in the solution
-    neighbor = solution[:]
-    idx1, idx2 = random.sample(range(len(neighbor)), 2)
-    neighbor[idx1], neighbor[idx2] = neighbor[idx2], neighbor[idx1]
-    return neighbor
-
-def simulated_annealing(instance, t_start=100, t_stop=0.01, cooling_rate=0.99, max_iterations=1000, quiet=False):
+def simulated_annealing(instance, t_start=1000, t_stop=0.01, cooling_rate=0.9999, max_iterations=200000, quiet=False):
     # Initial solution
-    current_solution = random_solution(instance)
-    current_makespan = makespan(instance, current_solution)
+    history = []
+    current_solution = helper.random_solution(instance)
+    current_makespan = helper.makespan(instance, current_solution)
     best_solution = current_solution[:]
     best_makespan = current_makespan
+
+    history.append(best_makespan) # Saves history for plots
 
     t = t_start
     current_iteration = 0
 
     for i in range(max_iterations):
-        # Generate candidate
-        new_solution = swap(current_solution)
-        new_makespan = makespan(instance, new_solution)
+        # Generate candidate by swapping two random elements of the current solution
+        new_solution = helper.swap(current_solution)
+        new_makespan = helper.makespan(instance, new_solution)
 
+        # Find the difference between the new and the old makespan
         diff = new_makespan - current_makespan
 
-        # Check if solution should be accepted
+        # Check if solution should be accepted;
+        # 1. If the diff is less than 0 (negative), it is a better solution
+        # 2. Sometimes accept a worse solution depending on the tempearture
         if diff < 0 or random.random() < math.exp(-diff / t):
             # Update current solution
             current_solution = new_solution
@@ -65,12 +37,18 @@ def simulated_annealing(instance, t_start=100, t_stop=0.01, cooling_rate=0.99, m
             if current_makespan < best_makespan:
                 best_solution = current_solution[:]
                 best_makespan = current_makespan
+                history.append(best_makespan) # Saves history for plots
 
-        t *= cooling_rate
+        t *= cooling_rate # Cool down the temperature by the cooling rate factor.
+
+        # Check stop conditions;
+        # 1. Check if max iterations are reached
         if i == max_iterations - 1 and not quiet:
             print(f'Ran out of iterations!(temp: {t})')
+
+        # 2. Check if temperature is too low
         if t < t_stop:
             if not quiet: 
                 print(f'Temperature too low! (iteration: {i})')
             break
-    return best_solution, best_makespan
+    return best_solution, best_makespan, history
