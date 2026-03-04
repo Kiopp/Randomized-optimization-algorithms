@@ -4,7 +4,7 @@ import parse
 def main():
     instances = parse.load_instances("p_median_capacitated.txt")
     if instances:
-        first_key = sorted(instances.keys())[16]
+        first_key = sorted(instances.keys())[0]
         inst = instances[first_key]
 
         print(f"\nNSGA-II on Instance {first_key} (n={inst.n}, p={inst.p})")
