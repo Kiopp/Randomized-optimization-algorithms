@@ -1,2 +1,2 @@
 # Randomized optimization algorithms (ROA)
-Soving different problems using ROAs
+Solving different problems using ROAs
